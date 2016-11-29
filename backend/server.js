@@ -28,7 +28,7 @@ app.use(bodyParser.json())
 app.use(function(req, res, next) {
 	res.setHeader('Access-Control-Allow_Origin', '*')
 	res.setHeader('Access-Control-Allow_Methods', 'GET, POST')
-	res.setHeader('Access-Control-Allow_Headers', 'X-Requested-With, content-type, \Authorization')
+	res.setHeader('Access-Control-Allow_Headers', 'X-Requested-With, content-type, Authorization')
 	next()
 })
 
@@ -48,11 +48,39 @@ app.get('/', function(req,res) {
 /* get instance of router */
 var apiRouter = express.Router()
 
+/*----------  ROUTE MIDDLEWARE   ----------*/
+apiRouter.use(function(req,res, next){
+	console.log('someone just accessed the app')
+	next()
+})
+
 /* router test: accessed at GET http://localhost:8080/api */
 apiRouter.get('/', function(req,res) {
 	res.json({ message: 'congrats muddafugga you accessed the api'})
 })
 
+/* Actions for Routes with endpoint /users */
+apiRouter.route('users')
+	/* create user -- POST */
+	.post(function(req,res){
+		var user = new User()
+		user.name = req.body.name
+		user.username = req.body.username
+		user.password = req.body.password
+
+		/* Save user and check for errors */
+		user.save(function(err) {
+			if(err) {
+				if(err.code === 11000)
+					return res.json({success: false, message: 'A user with that username already exists'})
+				else
+					return res.send(err)
+			}
+			res.json({message: 'New User Created!'})
+		})
+	})
+
+	
 /* Register Routes - all routes prefixed with /api */
 app.use('/api', apiRouter)
 
