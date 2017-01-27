@@ -48,19 +48,20 @@ app.get('/', function(req,res) {
 /* get instance of router */
 var apiRouter = express.Router()
 
-/*----------  ROUTE MIDDLEWARE   ----------*/
-apiRouter.use(function(req,res, next){
-	console.log('someone just accessed the app')
-	next()
-})
 
 /* router test: accessed at GET http://localhost:8080/api */
 apiRouter.get('/', function(req,res) {
 	res.json({ message: 'congrats muddafugga you accessed the api'})
 })
 
+	/*----------  ROUTE MIDDLEWARE - place after create   ----------*/
+apiRouter.use(function(req,res, next){
+	console.log('someone just accessed the app')
+	next()
+})
+
 /* Actions for Routes with endpoint /users */
-apiRouter.route('users')
+apiRouter.route('/users')
 	/* create user -- POST */
 	.post(function(req,res){
 		var user = new User()
@@ -79,6 +80,44 @@ apiRouter.route('users')
 			res.json({message: 'New User Created!'})
 		})
 	})
+
+	/* Get All Users -- GET */
+	.get(function(req,res){
+		User.find(function(err,users){
+			if(err) throw err
+			/* return users in json */
+			res.json(users)
+		})
+	})
+
+	/* Actions for Routes with endpoint /users/user_id */
+	apiRouter.route('/users/:user_id')
+	/* get user by id */
+	.get(function(req,res){
+		User.findById(req.params.user_id, function(err,user){
+			if(err) throw err
+				res.json(user)
+		})
+	})
+
+	/* update user info by id */
+	.put(function(req,res){
+		User.findById(req.params.user_id, function(err,user){
+			if(err) throw err
+				/* update user info only if it is new info */
+				if(req.body.name) user.name = req.body.name
+				if(req.body.username) user.username = req.body.username
+				if(req.body.password) user.password = req.body.password
+
+				/* save updates */
+				user.save(function(err){
+					if(err) throw err
+						res.json({message: 'User Updated successfully'})
+				})	
+		})
+	})
+
+
 
 	
 /* Register Routes - all routes prefixed with /api */
@@ -99,7 +138,12 @@ console.log('check out port ' + port)
 /*================================
 =            DATABASE            =
 ================================*/
-mongoose.connect('mongodb://localhost/rateRentalDB')
+mongoose.connect('mongodb://localhost/rateRentalDB', function ( err ) {
+    if ( err ) {
+        return console.log( 'cannot connect' )
+    }
+    console.log( 'connected to local mongoDB successfully!')
+})
 
 
 /*=====  End of DATABASE  ======*/
